@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Malla Curricular - Comunicación Social (LUZ)</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f9f9fb;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #444;
+    }
+    .grid {
+      display: flex;
+      overflow-x: auto;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .semester {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      min-width: 200px;
+      flex-shrink: 0;
+    }
+    .semester h2 {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+    .subject {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #e3e8f0;
+      transition: background 0.3s;
+      position: relative;
+    }
+    .subject:hover {
+      background: #d0d8e5;
+    }
+    .subject.approved {
+      background: #a8e6cf;
+      text-decoration: line-through;
+    }
+    .subject.locked {
+      background: #ddd;
+      color: #777;
+      cursor: not-allowed;
+    }
+    .subject.locked:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #444;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      font-size: 0.8rem;
+      margin-top: 4px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <h1>Malla Curricular - Comunicación Social (LUZ)</h1>
+  <div class="grid" id="malla"></div>
+
+  <script>
+    const malla = {
+      "Semestre 1": [
+        "Taller de Morfosintaxis I",
+        "Comunicación Gráfica",
+        "Práctica Profesional I",
+        "Lógica para un Profesional Eficiente",
+        "Modo de Vida e Identidad Nacional",
+        "Orientación"
+      ],
+      "Semestre 2": [
+        { name: "Taller de Morfosintaxis II", req: ["Taller de Morfosintaxis I"] },
+        "Introducción al Periodismo",
+        "Historia Contemporánea",
+        "Principios Básicos del Mercadeo",
+        "Idioma I.P.E.",
+        "Autodesarrollo"
+      ],
+      "Semestre 3": [
+        { name: "Taller de Redacción I", req: ["Taller de Morfosintaxis II"] },
+        "Introducción a la Radio",
+        "Teoría de la Comunicación",
+        "Ética y Legislación del Periodismo",
+        "Metodología de la Investigación Documental"
+      ],
+      "Semestre 4": [
+        { name: "Taller de Redacción II", req: ["Taller de Redacción I"] },
+        "Sistema Político Venezolano",
+        "Sociología de la Comunicación",
+        "Ética Ecológica",
+        "Introducción a la Fotografía"
+      ],
+      "Semestre 5": [
+        "Lenguaje Cinematográfico",
+        "Lenguaje Televisivo",
+        "Métodos Cuantitativos Aplicados a la Comunicación",
+        "Psicología de la Comunicación",
+        "Geopolítica",
+        "Servicio Comunitario"
+      ],
+      "Semestre 6": [
+        "Nuevas Tecnologías de los Medios Audiovisuales",
+        { name: "Locución Básica", req: ["Introducción a la Radio"] },
+        { name: "Técnicas de Investigación Aplicadas a los Medios Audiovisuales", req: ["Métodos Cuantitativos Aplicados a la Comunicación"] },
+        "Estética de la Imagen y el Sonido",
+        "Fotoperiodismo"
+      ],
+      "Semestre 7": [
+        { name: "Géneros Periodísticos de Televisión", req: ["Lenguaje Televisivo"] },
+        { name: "Géneros Periodísticos de Radio I", req: ["Locución Básica"] },
+        "Guión Cinematográfico",
+        { name: "Práctica Profesional II", req: ["Práctica Profesional I"] },
+        { name: "Comunicación Fotográfica", req: ["Introducción a la Fotografía"] },
+        "Electiva I"
+      ],
+      "Semestre 8": [
+        "Semiología Audiovisual",
+        { name: "Géneros Periodísticos de Radio II", req: ["Géneros Periodísticos de Radio I"] },
+        "Producción de Televisión",
+        "Diaporama",
+        "Electiva II"
+      ],
+      "Semestre 9": [
+        { name: "Proyecto de Grado I", req: ["Técnicas de Investigación Aplicadas a los Medios Audiovisuales"] },
+        "Electiva III",
+        "Gerencia de Medios Audiovisuales"
+      ],
+      "Semestre 10": [
+        { name: "Proyecto de Grado II", req: ["Proyecto de Grado I"] },
+        { name: "Práctica Profesional III", req: ["Práctica Profesional II"] }
+      ]
+    };
+
+    const estado = JSON.parse(localStorage.getItem('estadoMaterias')) || {};
+
+    function guardarEstado() {
+      localStorage.setItem('estadoMaterias', JSON.stringify(estado));
+    }
+
+    function crearMalla() {
+      const container = document.getElementById('malla');
+      container.innerHTML = '';
+
+      const aprobadas = new Set(Object.keys(estado).filter(k => estado[k]));
+
+      for (const [semestre, materias] of Object.entries(malla)) {
+        const col = document.createElement('div');
+        col.className = 'semester';
+        const h2 = document.createElement('h2');
+        h2.textContent = semestre;
+        col.appendChild(h2);
+
+        for (const m of materias) {
+          const nombre = typeof m === 'string' ? m : m.name;
+          const requisitos = typeof m === 'string' ? [] : m.req || [];
+
+          const div = document.createElement('div');
+          div.className = 'subject';
+          div.textContent = nombre;
+
+          const aprobada = estado[nombre];
+          const falta = requisitos.filter(r => !aprobadas.has(r));
+
+          if (aprobada) div.classList.add('approved');
+          else if (falta.length) {
+            div.classList.add('locked');
+            div.setAttribute('data-tooltip', Falta: ${falta.join(', ')});
+          }
+
+          if (!div.classList.contains('locked')) {
+            div.addEventListener('click', () => {
+              estado[nombre] = !estado[nombre];
+              guardarEstado();
+              crearMalla();
+            });
+          }
+
+          col.appendChild(div);
+        }
+
+        container.appendChild(col);
+      }
+    }
+
+    crearMalla();
+  </script>
+</body>
+</html>
